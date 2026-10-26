@@ -1,0 +1,74 @@
+name: Build project review assets
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build-assets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install slide and browser tools
+        run: |
+          npm install --no-save --package-lock=false pptxgenjs playwright
+          npx playwright install --with-deps chromium
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+      - name: Generate PowerPoint and record working model
+        run: |
+          mkdir -p review
+          python3 -m http.server 8000 >/tmp/roamly-server.log 2>&1 &
+          sleep 2
+          node --input-type=module <<'NODE'
+          import pptxgen from 'pptxgenjs';
+          import { chromium } from 'playwright';
+          const pptx = new pptxgen();
+          pptx.layout = 'LAYOUT_WIDE';
+          pptx.author = 'Roamly Project Team';
+          pptx.subject = 'Software engineering project review';
+          pptx.title = 'Roamly Travel & Tourism Platform';
+          pptx.theme = { headFontFace: 'Aptos Display', bodyFontFace: 'Aptos', lang: 'en-US' };
+          const slides = [
+            ['Roamly','Travel & Tourism Platform','Software Engineering Project Review · Working prototype'],
+            ['The planning challenge','Trip ideas, activities and budgets can be scattered across separate tools.','Roamly explores a single, friendly starting point for travel planning.'],
+            ['Project goal','Help travelers discover destinations and shape a simple itinerary.','Primary user: traveler planning a trip. Local guide profiles are illustrative.'],
+            ['Prototype features','Destination discovery · Search feedback · Add and remove itinerary items','Estimated activity budget · Browser-local persistence · Guide profile dialog'],
+            ['Scrum plan context','6 sprints · 14 activities · 115 story points · 72 days','Figures are stated in the supplied project overview.'],
+            ['System design','Static HTML + responsive CSS + browser JavaScript','localStorage keeps the demo itinerary in the current browser. See UML-Diagrams.md.'],
+            ['Working model','Browse a destination and choose “Add idea”.','The item appears in the itinerary and the estimated budget updates.'],
+            ['Edit the itinerary','Add a custom activity and estimated cost. Remove an item to recalculate.','Reload the page to demonstrate browser persistence.'],
+            ['Scope and limitations','Sample destinations, prices, ratings and guide profiles only.','No live search, accounts, API, collaboration, booking, messaging or payments.'],
+            ['Conclusion and next steps','The prototype demonstrates a front-end journey from inspiration to itinerary.','Next: secure accounts, shared trips, validated data sources, usability and accessibility evaluation.']
+          ];
+          for (let i=0;i<slides.length;i++) {
+            const s=pptx.addSlide(); s.background={color:i===0?'163C2F':'F7F6EF'};
+            const dark=i===0; const fg=dark?'FFFFFF':'14251F';
+            s.addText('ROAMLY  /  PROJECT REVIEW',{x:0.65,y:0.4,w:8,h:0.3,fontFace:'Aptos',fontSize:10,bold:true,charSpacing:2,color:dark?'D9F27A':'28624D',margin:0});
+            s.addText(slides[i][0],{x:0.7,y:1.35,w:11.8,h:1.15,fontFace:'Aptos Display',fontSize:i===0?38:31,bold:true,color:fg,breakLine:false,margin:0,fit:'shrink'});
+            s.addText(slides[i][1],{x:0.75,y:3.0,w:11.2,h:1.1,fontFace:'Aptos',fontSize:22,color:fg,breakLine:false,margin:0,fit:'shrink'});
+            s.addText(slides[i][2],{x:0.75,y:4.35,w:11.2,h:0.9,fontFace:'Aptos',fontSize:16,color:dark?'E4E9DF':'53645A',margin:0,fit:'shrink'});
+            s.addText(String(i+1).padStart(2,'0')+' / 10',{x:11.35,y:6.75,w:1.2,h:0.3,fontSize:10,color:dark?'D9F27A':'718078',align:'right',margin:0});
+          }
+          await pptx.writeFile({fileName:'review/Roamly-Project-Review.pptx'});
+          const browser=await chromium.launch({headless:true});
+          const context=await browser.newContext({viewport:{width:1280,height:720},recordVideo:{dir:'review',size:{width:1280,height:720}}});
+          const page=await context.newPage();
+          await page.goto('http://127.0.0.1:8000/index.html'); await page.waitForTimeout(3500);
+          await page.locator('#searchInput').fill('Kyoto'); await page.waitForTimeout(1200); await page.getByRole('button',{name:/Explore/}).click(); await page.waitForTimeout(1800);
+          await page.getByRole('button',{name:'Add idea'}).first().click(); await page.waitForTimeout(1800);
+          await page.locator('#activity').fill('Sunset harbor walk'); await page.locator('#cost').fill('25'); await page.getByRole('button',{name:/Add to itinerary/}).click(); await page.waitForTimeout(2200);
+          await page.locator('#planner').scrollIntoViewIfNeeded(); await page.waitForTimeout(2200);
+          await page.locator('#guides').scrollIntoViewIfNeeded(); await page.waitForTimeout(1200); await page.getByRole('button',{name:/View profile/}).first().click(); await page.waitForTimeout(2200);
+          await context.close(); await browser.close();
+          NODE
+          ffmpeg -y -i review/*.webm -c:v libx264 -pix_fmt yuv420p -movflags +faststart review/Roamly-Working-Model.mp4
+      - uses: actions/upload-artifact@v4
+        with:
+          name: roamly-project-review-assets
+          path: review/
+          if-no-files-found: error
+          retention-days: 30
