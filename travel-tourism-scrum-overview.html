@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Travel & Tourism Platform — Project Itinerary</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16233F;
+    --ink-2:#1E3155;
+    --paper:#F7F2E7;
+    --paper-2:#EFE7D6;
+    --coral:#E8674B;
+    --teal:#0F5257;
+    --brass:#C99A2E;
+    --charcoal:#20242C;
+    --line: rgba(22,35,63,0.18);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--charcoal);
+    font-family:'IBM Plex Sans', sans-serif;
+    line-height:1.5;
+  }
+  h1,h2,h3,.display{ font-family:'Space Grotesk', sans-serif; }
+  .mono{ font-family:'IBM Plex Mono', monospace; }
+  a{color:inherit;}
+
+  /* ---------- HERO / BOARDING PASS ---------- */
+  .pass-wrap{
+    max-width:1040px;
+    margin:32px auto 0;
+    padding:0 20px;
+  }
+  .pass{
+    background:var(--ink);
+    color:var(--paper);
+    border-radius:18px;
+    position:relative;
+    display:grid;
+    grid-template-columns: 1fr 220px;
+    overflow:hidden;
+    box-shadow:0 20px 50px -20px rgba(22,35,63,0.55);
+  }
+  .pass-main{ padding:36px 40px 30px; }
+  .pass-stub{
+    background:var(--ink-2);
+    padding:36px 24px;
+    border-left:2px dashed rgba(247,242,231,0.35);
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+  }
+  .pass::before, .pass::after{
+    content:"";
+    position:absolute;
+    width:26px; height:26px;
+    background:var(--paper);
+    border-radius:50%;
+    top:50%; transform:translateY(-50%);
+    right:220px;
+    margin-right:-13px;
+    z-index:2;
+  }
+  .pass::after{ top:auto; bottom:-13px; transform:none; }
+  .pass::before{ top:-13px; }
+  .eyebrow{
+    text-transform:uppercase;
+    letter-spacing:.14em;
+    font-size:11px;
+    color:var(--brass);
+    font-weight:600;
+    margin:0 0 10px;
+  }
+  .pass-title{
+    font-size:clamp(28px,4.4vw,42px);
+    font-weight:700;
+    margin:0 0 14px;
+    line-height:1.08;
+  }
+  .route{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:8px;
+    font-size:13px;
+    color:rgba(247,242,231,0.85);
+    margin-bottom:26px;
+  }
+  .route b{ color:var(--paper); font-weight:600; }
+  .route .dash{ color:var(--coral); }
+  .info-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:18px;
+    border-top:1px solid rgba(247,242,231,0.18);
+    padding-top:18px;
+  }
+  .info-grid div{ min-width:0; }
+  .info-label{
+    font-size:10px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:rgba(247,242,231,0.55);
+    margin-bottom:4px;
+  }
+  .info-value{ font-size:16px; font-weight:600; font-family:'IBM Plex Mono',monospace; }
+  .stub-code{ font-size:12px; letter-spacing:.08em; color:rgba(247,242,231,0.6); text-transform:uppercase; }
+  .stub-big{ font-family:'IBM Plex Mono',monospace; font-size:34px; font-weight:600; margin-top:6px; color:var(--coral); }
+  .stub-foot{ font-size:11px; color:rgba(247,242,231,0.55); }
+  .barcode{
+    margin-top:16px;
+    height:34px;
+    background:repeating-linear-gradient(90deg, var(--paper) 0 2px, transparent 2px 5px, var(--paper) 5px 6px, transparent 6px 10px);
+    opacity:.75;
+  }
+
+  /* ---------- ROUTE MAP (signature element) ---------- */
+  .routemap-wrap{ max-width:1040px; margin:56px auto 0; padding:0 20px; }
+  .routemap-title{ font-size:13px; text-transform:uppercase; letter-spacing:.14em; color:var(--teal); font-weight:600; margin-bottom:22px; }
+  .routemap{
+    position:relative;
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    padding:10px 4px 0;
+    overflow-x:auto;
+  }
+  .routemap::before{
+    content:"";
+    position:absolute;
+    left:26px; right:26px; top:30px;
+    height:2px;
+    background-image:linear-gradient(90deg, var(--ink) 0 8px, transparent 8px 16px);
+    background-size:16px 2px;
+    background-repeat:repeat-x;
+  }
+  .stop{
+    flex:1 1 0;
+    min-width:120px;
+    text-align:center;
+    position:relative;
+    z-index:1;
+  }
+  .stop-node{
+    width:60px; height:60px;
+    border-radius:50%;
+    background:var(--paper);
+    border:2px solid var(--ink);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'IBM Plex Mono',monospace;
+    font-weight:600;
+    font-size:15px;
+    margin:0 auto 10px;
+    color:var(--ink);
+  }
+  .stop.active .stop-node{ background:var(--coral); border-color:var(--coral); color:var(--paper); }
+  .stop-name{ font-size:12.5px; font-weight:600; margin-bottom:2px; }
+  .stop-dur{ font-size:11px; color:#5b5f66; }
+
+  /* ---------- SPRINT SECTIONS ---------- */
+  .sprints-wrap{ max-width:1040px; margin:56px auto 80px; padding:0 20px; }
+  .section-head{
+    display:flex; align-items:baseline; justify-content:space-between;
+    margin-bottom:26px;
+  }
+  .section-head h2{ font-size:22px; margin:0; }
+  .section-head p{ margin:6px 0 0; font-size:14px; color:#5b5f66; max-width:60ch; }
+
+  .sprint{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:14px;
+    margin-bottom:26px;
+    overflow:hidden;
+  }
+  .sprint-head{
+    display:flex;
+    flex-wrap:wrap;
+    gap:16px;
+    align-items:center;
+    justify-content:space-between;
+    padding:18px 22px;
+    background:var(--paper-2);
+    border-bottom:2px dashed var(--line);
+  }
+  .sprint-tag{
+    font-family:'IBM Plex Mono',monospace;
+    font-weight:600;
+    font-size:13px;
+    background:var(--ink);
+    color:var(--paper);
+    padding:4px 10px;
+    border-radius:20px;
+  }
+  .sprint-name{ font-weight:600; font-size:15.5px; }
+  .sprint-meta{ display:flex; gap:18px; font-size:12.5px; color:#5b5f66; }
+  .sprint-meta b{ color:var(--charcoal); font-family:'IBM Plex Mono',monospace; }
+
+  .tags{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(260px,1fr));
+    gap:0;
+  }
+  .tag{
+    display:flex;
+    gap:14px;
+    padding:18px 22px;
+    border-top:1px solid var(--line);
+  }
+  .tags .tag:nth-child(-n+2){ border-top:none; }
+  @media (min-width: 720px){
+    .tags{ grid-template-columns: 1fr 1fr; }
+  }
+  .tag-hole{
+    flex:0 0 auto;
+    width:16px; height:16px;
+    border-radius:50%;
+    border:2px solid var(--brass);
+    margin-top:3px;
+    position:relative;
+  }
+  .tag-hole::after{
+    content:"";
+    position:absolute;
+    left:50%; top:-14px;
+    width:1px; height:14px;
+    background:var(--brass);
+    transform:translateX(-50%);
+  }
+  .tag-body{ flex:1; min-width:0; }
+  .tag-id{ font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--teal); font-weight:600; letter-spacing:.03em; }
+  .tag-title{ font-weight:600; font-size:14.5px; margin:3px 0 6px; }
+  .badge{
+    display:inline-block;
+    font-size:10.5px;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    font-weight:600;
+    color:var(--coral);
+    background:rgba(232,103,75,0.1);
+    padding:2px 8px;
+    border-radius:20px;
+    margin-bottom:8px;
+  }
+  .tag-foot{ display:flex; flex-wrap:wrap; gap:10px 16px; font-size:12px; color:#5b5f66; align-items:center; }
+  .stamp{
+    display:inline-flex; align-items:center; gap:5px;
+    font-family:'IBM Plex Mono',monospace;
+    font-weight:600;
+    color:var(--ink);
+  }
+  .stamp .dot{ width:7px;height:7px;border-radius:50%;background:var(--brass); }
+  .dep{
+    display:inline-flex; align-items:center; gap:5px;
+    background:var(--paper-2);
+    padding:2px 8px;
+    border-radius:6px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+  }
+  .dep.none{ color:#96998f; }
+
+  /* ---------- FOOTER / LEGEND ---------- */
+  .legend-wrap{ max-width:1040px; margin:0 auto 70px; padding:0 20px; }
+  .legend{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:22px;
+    background:var(--ink);
+    color:var(--paper);
+    border-radius:14px;
+    padding:30px 34px;
+  }
+  .legend h3{ font-size:13px; text-transform:uppercase; letter-spacing:.1em; color:var(--brass); margin:0 0 10px; }
+  .legend p, .legend li{ font-size:13px; color:rgba(247,242,231,0.82); margin:0; }
+  .legend ul{ margin:0; padding-left:18px; }
+  .legend li{ margin-bottom:6px; }
+
+  footer{ text-align:center; font-size:12px; color:#8a8d84; padding-bottom:40px; }
+
+  @media (max-width:760px){
+    .pass{ grid-template-columns:1fr; }
+    .pass::before,.pass::after{ display:none; }
+    .pass-stub{ border-left:none; border-top:2px dashed rgba(247,242,231,0.35); flex-direction:row; flex-wrap:wrap; gap:16px; }
+    .info-grid{ grid-template-columns:repeat(2,1fr); }
+  }
+</style>
+</head>
+<body>
+
+  <!-- HERO: BOARDING PASS -->
+  <div class="pass-wrap">
+    <div class="pass">
+      <div class="pass-main">
+        <p class="eyebrow">Project Itinerary · Agile Delivery Plan</p>
+        <h1 class="pass-title">Travel &amp; Tourism<br>Platform</h1>
+        <div class="route">
+          <b>Trip Planner</b><span class="dash">✈ ·· ✈</span>
+          <b>Hotel/Flight Comparison</b><span class="dash">✈ ·· ✈</span>
+          <b>Travel Diary</b><span class="dash">✈ ·· ✈</span>
+          <b>Guide Marketplace</b>
+        </div>
+        <div class="info-grid">
+          <div>
+            <div class="info-label">Framework</div>
+            <div class="info-value">SCRUM</div>
+          </div>
+          <div>
+            <div class="info-label">Sprints</div>
+            <div class="info-value">06</div>
+          </div>
+          <div>
+            <div class="info-label">Activities</div>
+            <div class="info-value">14</div>
+          </div>
+          <div>
+            <div class="info-label">Story Points</div>
+            <div class="info-value">115</div>
+          </div>
+        </div>
+      </div>
+      <div class="pass-stub">
+        <div>
+          <div class="stub-code">Total Duration</div>
+          <div class="stub-big">72d</div>
+          <div class="stub-foot">≈ 14–15 working weeks</div>
+        </div>
+        <div>
+          <div class="stub-code" style="margin-top:14px;">Destination</div>
+          <div class="info-value" style="font-size:14px;">MVP Launch</div>
+        </div>
+        <div class="barcode"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROUTE MAP -->
+  <div class="routemap-wrap">
+    <div class="routemap-title">Flight Path — Sprint Sequence</div>
+    <div class="routemap">
+      <div class="stop active">
+        <div class="stop-node">S1</div>
+        <div class="stop-name">Foundation</div>
+        <div class="stop-dur">12 days</div>
+      </div>
+      <div class="stop">
+        <div class="stop-node">S2</div>
+        <div class="stop-name">Trip Planner</div>
+        <div class="stop-dur">17 days</div>
+      </div>
+      <div class="stop">
+        <div class="stop-node">S3</div>
+        <div class="stop-name">Comparison</div>
+        <div class="stop-dur">17 days</div>
+      </div>
+      <div class="stop">
+        <div class="stop-node">S4</div>
+        <div class="stop-name">Travel Diary</div>
+        <div class="stop-dur">9 days</div>
+      </div>
+      <div class="stop">
+        <div class="stop-node">S5</div>
+        <div class="stop-name">Marketplace</div>
+        <div class="stop-dur">12 days</div>
+      </div>
+      <div class="stop">
+        <div class="stop-node">S6</div>
+        <div class="stop-name">Release</div>
+        <div class="stop-dur">5 days</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SPRINTS & ACTIVITIES -->
+  <div class="sprints-wrap">
+    <div class="section-head">
+      <div>
+        <h2>Sprint Backlog</h2>
+        <p>Every activity is tagged with its module, story points, duration and predecessor — the activity it cannot begin before.</p>
+      </div>
+    </div>
+
+    <!-- SPRINT 1 -->
+    <div class="sprint">
+      <div class="sprint-head">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span class="sprint-tag">SPRINT 01</span>
+          <span class="sprint-name">Foundation &amp; Discovery</span>
+        </div>
+        <div class="sprint-meta">Story Points <b>18</b> &nbsp;·&nbsp; Duration <b>12d</b></div>
+      </div>
+      <div class="tags">
+        <div class="tag">
+          <div class="tag-hole"></div>
+          <div class="tag-body">
+            <div class="tag-id">A1 · TT-01</div>
+            <div class="tag-title">Requirement Gathering &amp; Analysis</div>
+            <span class="badge">Foundation</span>
+            <div class="tag-foot">
+              <span class="stamp"><span class="dot"></span>5 SP</span>
+              <span>3 days</span>
+              <span class="dep none">Predecessor: None</span>
+            </div>
+          </div>
+        </div>
+        <div class="tag">
+          <div class="tag-hole"></div>
+          <div class="tag-body">
+            <div class="tag-id">A2 · TT-02</div>
+            <div class="tag-title">UI/UX Wireframing &amp; Prototyping</div>
+            <span class="badge">Foundation</span>
+            <div class="tag-foot">
+              <span class="stamp"><span class="dot"></span>8 SP</span>
+              <span>5 days</span>
+              <span class="dep">← A1</span>
+            </div>
+          </div>
+        </div>
+        <div class="tag">
+          <div class="tag-hole"></div>
+          <div class="tag-body">
+            <div class="tag-id">A3 · TT-03</div>
+            <div class="tag-title">Database Design &amp; System Architecture</div>
+            <span class="badge">Foundation</span>
+            <div class="tag-foot">
+              <span class="stamp"><span class="dot"></span>5 SP</span>
+              <span>4 days</span>
+              <span class="dep">← A1</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SPRINT 2 -->
+    <div class="sprint">
+      <div class="sprint-head">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span class="sprint-tag">SPRINT 02</span>
+          <span class="sprint-name">Trip Planner</span>
+        </div>
+        <div class="sprint-meta">Story Points <b>26</b> &nbsp;·&nbsp; Duration <b>17d</b></div>
+      </div>
+      <div class="tags">
+        <div class="tag">
+          <div class="tag-hole"></div>
+          <div class="tag-body">
+            <div class="tag-id">A4 · TP-01</div>
+            <div class="tag-title">Itinerary Builder Engine</div>
+            <span class="badge">Trip Planner</span>
+            <div class="tag-foot">
+              <span class="stamp"><span class="dot"></span>13 SP</span>
+              <span>8 days</span>
+              <span class="dep">← A2, A3</span>
+            </div>
+          </div>
+        </div>
+        <div class="tag">
+          <div class="tag-hole"></div>
+          <div class="tag-body">
+            <div class="tag-id">A5 · TP-02</div>
+            <div class="tag-title">Budget Estimator Module</div>
+            <span class="badge">Trip Planner</span>
+            <div class="tag-foot">
+              <span class="stamp"><span class="dot"></span>8 SP</span>
+              <span>5 days</span>
+              <span class="dep">← A4</span>
+            </div>
+          </div>
+        </div>
+        <div class="tag">
+          <div class="tag-hole"></div>
+          <div class="tag-body">
+            <div class="tag-id">A6 · TP-03</div>
+            <div class="tag-title">Collaborator Invite &amp; Sharing</div>
+            <span class="badge">Trip Planner</span>
+            <div class="tag-foot">
+              <span class="stamp"><span class="dot"></span>5 SP</span>
+              <span>4 days</span>
+              <span class="dep">← A4</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SPRINT 3 -->
+    <div class="sprint">
+      <div class="sprint-head">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span class="sprint-tag">SPRINT 03</span>
+          <span class="sprint-name">Hotel / Flight Comparison</span>
+        </div>
+        <div class="sprint-meta">Story Points <b>29</b> &nbsp;·&nbsp; Duration <b>17d</b></div>
+      </div>
+      <div class="tags">
+        <div class="tag">
+          <div class="tag-hole"></div>
+          <div class="tag-body">
+            <div class="tag-id">A7 · HF-01</div>
+            <div class="tag-title">Hotel/Flight API Integration</div>
+            <span class="badge">Comparison Tool</span>
+            <div class="tag-foot">
+              <span class="stamp"><span class="dot"></span>13 SP</span>
+              <span>7 days</span>
+              <span class="dep">← A3</span>
+            </div>
+          </div>
+        </div>
+        <div class="tag">
+          <div class="tag-hole"></div>
+          <div class="tag-body">
+            <div class="tag-id">A8 · HF-02</div>
+            <div class="tag-title">Search, Filter &amp; Sort UI</div>
+            <span class="badge">Comparison Tool</span>
+            <div class="tag-foot">
+              <span class="stamp"><span class="dot"></span>8 SP</span>
+              <span>5 days</span>
+              <span class="dep">← A7</span>
+            </div>
+          </div>
+        </div>
+        <div class="tag">
+          <div class="tag-hole"></div>
+          <div class="tag-body">
+            <div class="tag-id">A9 · HF-03</div>
+            <div class="tag-title">Price Comparison &amp; Ranking Engine</div>
+            <span class="badge">Comparison Tool</span>
+            <div class="tag-foot">
+              <span class="stamp"><span class="dot"></span>8 SP</span>
+              <span>5 days</span>
+              <span class="dep">← A7</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SPRINT 4 -->
+    <div class="sprint">
+      <div class="sprint-head">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span class="sprint-tag">SPRINT 04</span>
+          <span class="sprint-name">Travel Diary &amp; Photo Blog</span>
+        </div>
+        <div class="sprint-meta">Story Points <b>13</b> &nbsp;·&nbsp; Duration <b>9d</b></div>
+      </div>
+      <div class="tags">
+        <div class="tag">
+          <div class="tag-hole"></div>
+          <div class="tag-body">
+            <div class="tag-id">A10 · TD-01</div>
+            <div class="tag-title">Diary Entry &amp; Rich Text Editor</div>
+            <span class="badge">Travel Diary</span>
+            <div class="tag-foot">
+              <span class="stamp"><span class="dot"></span>8 SP</span>
+              <span>5 days</span>
+              <span class="dep">← A2</span>
+            </div>
+          </div>
+        </div>
+        <div class="tag">
+          <div class="tag-hole"></div>
+          <div class="tag-body">
+            <div class="tag-id">A11 · TD-02</div>
+            <div class="tag-title">Photo Upload &amp; Gallery Feed</div>
+            <span class="badge">Travel Diary</span>
+            <div class="tag-foot">
+              <span class="stamp"><span class="dot"></span>5 SP</span>
+              <span>4 days</span>
+              <span class="dep">← A10</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SPRINT 5 -->
+    <div class="sprint">
+      <div class="sprint-head">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span class="sprint-tag">SPRINT 05</span>
+          <span class="sprint-name">Local Tour Guide Marketplace</span>
+        </div>
+        <div class="sprint-meta">Story Points <b>21</b> &nbsp;·&nbsp; Duration <b>12d</b></div>
+      </div>
+      <div class="tags">
+        <div class="tag">
+          <div class="tag-hole"></div>
+          <div class="tag-body">
+            <div class="tag-id">A12 · GM-01</div>
+            <div class="tag-title">Guide Listing &amp; Profile Pages</div>
+            <span class="badge">Marketplace</span>
+            <div class="tag-foot">
+              <span class="stamp"><span class="dot"></span>8 SP</span>
+              <span>5 days</span>
+              <span class="dep">← A3</span>
+            </div>
+          </div>
+        </div>
+        <div class="tag">
+          <div class="tag-hole"></div>
+          <div class="tag-body">
+            <div class="tag-id">A13 · GM-02</div>
+            <div class="tag-title">Booking, Chat &amp; Payment Gateway</div>
+            <span class="badge">Marketplace</span>
+            <div class="tag-foot">
+              <span class="stamp"><span class="dot"></span>13 SP</span>
+              <span>7 days</span>
+              <span class="dep">← A12</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SPRINT 6 -->
+    <div class="sprint">
+      <div class="sprint-head">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span class="sprint-tag">SPRINT 06</span>
+          <span class="sprint-name">Integration, QA &amp; Release</span>
+        </div>
+        <div class="sprint-meta">Story Points <b>8</b> &nbsp;·&nbsp; Duration <b>5d</b></div>
+      </div>
+      <div class="tags">
+        <div class="tag" style="grid-column:1/-1;">
+          <div class="tag-hole"></div>
+          <div class="tag-body">
+            <div class="tag-id">A14 · RL-01</div>
+            <div class="tag-title">Integration Testing, QA &amp; Production Deployment</div>
+            <span class="badge">Release</span>
+            <div class="tag-foot">
+              <span class="stamp"><span class="dot"></span>8 SP</span>
+              <span>5 days</span>
+              <span class="dep">← A5, A6, A8, A9, A11, A13</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEGEND -->
+  <div class="legend-wrap">
+    <div class="legend">
+      <div>
+        <h3>Framework</h3>
+        <p>Delivered using <b style="color:#F7F2E7;">SCRUM</b>: 6 sprints, each closing with a Sprint Review and Retrospective. Daily stand-ups track story-point burn-down within every sprint.</p>
+      </div>
+      <div>
+        <h3>Reading the tags</h3>
+        <ul>
+          <li><b>SP</b> — Story Points, relative effort sized by the team (Fibonacci: 5 / 8 / 13).</li>
+          <li><b>Duration</b> — estimated working days to complete the activity.</li>
+          <li><b>← Predecessor</b> — the activity(s) that must finish first.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Modules in scope</h3>
+        <ul>
+          <li>Trip Planner — itinerary, budget, collaborators</li>
+          <li>Hotel/Flight Comparison Tool</li>
+          <li>Travel Diary &amp; Photo Blog</li>
+          <li>Local Tour Guide Marketplace</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <footer>Travel &amp; Tourism Platform — Agile Project Overview</footer>
+
+</body>
+</html>
